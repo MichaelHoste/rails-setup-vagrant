@@ -2,9 +2,8 @@
 
 def setup
   host_check_ruby_version()
-  host_ask_questions()
   host_install_gems()
-  host_ask_host_password()
+  host_ask_questions()
   host_update_git_submodules()
   host_remove_logs()
   host_launch_guest_machine()
@@ -53,26 +52,6 @@ def host_check_ruby_version
   puts "=================\n"
 end
 
-def host_ask_questions
-  current_folder = File.basename(Dir.getwd)
-  default_hostname = "#{current_folder}.local".downcase
-  default_host     = '192.168.42.101'
-  
-  print "Host (default is '#{default_host}'): "  
-  STDOUT.flush  
-  @host = gets.chomp
-
-  print "Hostname (default is '#{default_hostname}'): "  
-  STDOUT.flush  
-  @hostname = gets.chomp.downcase
-  
-  @host = default_host if @host.empty?()
-  @hostname = default_hostname if @hostname.empty?()
-
-  puts "Host is #{@host}"
-  puts "Hostname is #{@hostname}"
-end
-
 def host_install_gems
   puts "\n================="
   puts 'Install required gems on host'
@@ -106,14 +85,26 @@ def host_install_gems
   include Appscript
 end
 
-def host_ask_host_password
-  if @guest_status == "not created"
-    puts "\n================="
-    puts 'Required host password for nfs sharing'
-    puts "=================\n"
+def host_ask_questions
+  current_folder = File.basename(Dir.getwd)
+  default_hostname = "#{current_folder}.local".downcase
+  default_host     = '192.168.42.101'
   
-    @password = ask("Host password: ") { |q| q.echo = false }
-  end
+  print "Host (default is '#{default_host}'): "  
+  STDOUT.flush  
+  @host = gets.chomp
+
+  print "Hostname (default is '#{default_hostname}'): "  
+  STDOUT.flush  
+  @hostname = gets.chomp.downcase
+  
+  @password = ask("Host password: ") { |q| q.echo = false }
+  
+  @host = default_host if @host.empty?()
+  @hostname = default_hostname if @hostname.empty?()
+
+  puts "Host is #{@host}"
+  puts "Hostname is #{@hostname}"
 end
 
 def host_update_git_submodules
@@ -190,9 +181,7 @@ def host_create_dns
       
   redirection_dns = `cat /etc/hosts | grep www.#{@hostname}`.include?(@hostname)
   
-  unless redirection_dns
-    @password = ask("Host password: ") { |q| q.echo = false } if not @password
-    
+  unless redirection_dns    
     host1 = "#{@host}       www.#{@hostname}"
     host2 = "#{@host}           #{@hostname}"
   
