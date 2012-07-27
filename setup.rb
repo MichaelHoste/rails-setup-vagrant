@@ -161,8 +161,14 @@ def host_launch_guest_machine
   puts "Current status is : #{@guest_status}"
   puts "=================\n"
 
-  puts 'vagrant up'
-  PTY.spawn 'vagrant up' do |stdin,stdout,pid|
+  if @guest_status == "not created"
+    command = 'vagrant up'
+  else
+    command = 'vagrant resume'
+  end
+
+  puts command
+  PTY.spawn command do |stdin,stdout,pid|
     begin
       stdin.expect("Password:") do
         stdout.write("#{@password}\n")
