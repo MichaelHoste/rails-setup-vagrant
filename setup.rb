@@ -233,8 +233,8 @@ def guest_system_install
   puts "=================\n"
   
   # apparently no password needed here
-  @terminal.do_script('sudo apt-get update',  :in => @tab1)
-  @terminal.do_script('sudo apt-get upgrade', :in => @tab1)
+  @terminal.do_script('sudo apt-get -y update',  :in => @tab1)
+  @terminal.do_script('sudo apt-get -y upgrade', :in => @tab1)
 end
 
 def guest_bundle_install
