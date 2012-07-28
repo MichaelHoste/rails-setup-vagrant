@@ -14,6 +14,7 @@ def setup
   @tab2 = host_new_tab(@terminal)
 
   guest_ssh()
+  guest_system_install()
   guest_bundle_install()
   guest_app_reset()
   guest_git_setup()
@@ -224,6 +225,16 @@ def guest_ssh
   
   @terminal.do_script('vagrant ssh',    :in => @tab1)
   @terminal.do_script('cd /vagrant',    :in => @tab1)
+end
+
+def guest_system_install
+  puts "\n================="
+  puts 'Guest System install'
+  puts "=================\n"
+  
+  # apparently no password needed here
+  @terminal.do_script('sudo apt-get update',  :in => @tab1)
+  @terminal.do_script('sudo apt-get upgrade', :in => @tab1)
 end
 
 def guest_bundle_install
