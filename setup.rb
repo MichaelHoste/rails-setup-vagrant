@@ -12,12 +12,12 @@ def setup
   guest_bundle_install()
   guest_app_reset()
   guest_git_setup()
-  guest_launch_server()
-  
+    
   @terminal = app('Terminal')
   @tab1 = host_new_tab(@terminal)
   @tab2 = host_new_tab(@terminal)
   
+  guest_launch_server()
   host_open_project()
 
   display_info_message()
@@ -272,10 +272,9 @@ def guest_launch_server
   puts 'Guest launch rails server on port 3000'
   puts "=================\n"
   
-  #@terminal.do_script('bundle exec rails server', :in => @tab1)
-  command = "bundle exec rails server"
-  puts command
-  guest_ssh_command(command)
+  @terminal.do_script('vagrant ssh',              :in => @tab1)
+  @terminal.do_script('cd /vagrant',              :in => @tab1)
+  @terminal.do_script('bundle exec rails server', :in => @tab1)
 end
 
 def host_open_project
