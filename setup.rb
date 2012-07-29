@@ -88,11 +88,9 @@ end
 def host_ask_questions
   current_folder = File.basename(Dir.getwd)
   default_hostname = "#{current_folder}.local".downcase
-  default_host     = '192.168.42.101'
   
-  print "Host (default is '#{default_host}'): "  
-  STDOUT.flush  
-  @host = gets.chomp
+  @host = `cat Vagrantfile | grep config.vm.network`.split("'")[1]
+  print "Host : #{@host}"  
 
   print "Hostname (default is '#{default_hostname}'): "  
   STDOUT.flush  
@@ -168,16 +166,17 @@ def host_launch_guest_machine
   end
 
   puts command
-  PTY.spawn command do |stdin,stdout,pid|
-    begin
-      stdin.expect("Password:") do
-        stdout.write("#{@password}\n")
-        puts stdin.read.lstrip
-      end
-    rescue Errno::EIO
-      # don't care
-    end
-  end
+  system(command)
+#  PTY.spawn command do |stdin,stdout,pid|
+#    begin
+#      stdin.expect("Password:") do
+#        stdout.write("#{@password}\n")
+#        puts stdin.read.lstrip
+#      end
+#    rescue Errno::EIO
+#      # don't care
+#    end
+#  end
 end
 
 def host_create_dns
@@ -188,6 +187,8 @@ def host_create_dns
   redirection_dns = `cat /etc/hosts | grep www.#{@hostname}`.include?(@hostname)
   
   unless redirection_dns    
+    @password = ask("Host password: ") { |q| q.echo = false }
+    
     host1 = "#{@host}       www.#{@hostname}"
     host2 = "#{@host}           #{@hostname}"
   
