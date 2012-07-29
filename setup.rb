@@ -9,15 +9,15 @@ def setup
   host_launch_guest_machine()
   host_create_dns()
 
-  @terminal = app('Terminal')
-  @tab1 = host_new_tab(@terminal)
-  @tab2 = host_new_tab(@terminal)
-
-  guest_ssh()
   guest_bundle_install()
   guest_app_reset()
   guest_git_setup()
   guest_launch_server()
+  
+  @terminal = app('Terminal')
+  @tab1 = host_new_tab(@terminal)
+  @tab2 = host_new_tab(@terminal)
+  
   host_open_project()
 
   display_info_message()
@@ -210,31 +210,26 @@ def host_create_dns
   end
 end
 
-def host_new_tab(terminal)
-  if @got_first_tab_already
-    app("System Events").application_processes["Terminal.app"].keystroke("t", :using => :command_down)
-  end
-  @got_first_tab_already = true
-  terminal.windows[1].tabs.last.get
-end
-
-def guest_ssh
-  puts "\n================="
-  puts 'Guest SSH'
-  puts "=================\n"
-  
-  @terminal.do_script('vagrant ssh',    :in => @tab1)
-  @terminal.do_script('cd /vagrant',    :in => @tab1)
-end
+#def guest_ssh
+#  puts "\n================="
+#  puts 'Guest SSH'
+#  puts "=================\n"
+#  
+#  @terminal.do_script('vagrant ssh',    :in => @tab1)
+#  @terminal.do_script('cd /vagrant',    :in => @tab1)
+#end
 
 def guest_bundle_install
   puts "\n================="
   puts 'Guest Bundle install'
   puts "=================\n"
-  
+
 # No automatic update so the Gemfile.lock is used
 # @terminal.do_script('bundle update',  :in => @tab1)
-  @terminal.do_script('bundle install', :in => @tab1)
+# @terminal.do_script('bundle install', :in => @tab1)
+  command = 'bundle install'
+  puts command
+  guest_ssh_command(command)
 end
 
 def guest_app_reset
@@ -243,7 +238,10 @@ def guest_app_reset
     puts 'Guest reset and bootstrap the app (only if new guest)'
     puts "=================\n"
     
-    @terminal.do_script('bundle exec rake app:reset', :in => @tab1)
+#    @terminal.do_script('bundle exec rake app:reset', :in => @tab1)
+    command = 'bundle exec rake app:reset'
+    puts command
+    guest_ssh_command(command)
   end
 end
 
@@ -261,9 +259,10 @@ def guest_git_setup
       "echo '#{@id_rsa_pub}' >> ~/.ssh/id_rsa.pub",
       "chmod 600 ~/.ssh/id_rsa",
       "chmod 600 ~/.ssh/id_rsa.pub",
-      "clear"
     ].each do |command|
-      @terminal.do_script(command, :in => @tab1)
+      #@terminal.do_script(command, :in => @tab1)
+      puts command
+      guest_ssh_command(command)
     end
   end
 end
@@ -273,7 +272,10 @@ def guest_launch_server
   puts 'Guest launch rails server on port 3000'
   puts "=================\n"
   
-  @terminal.do_script('bundle exec rails server', :in => @tab1)
+  #@terminal.do_script('bundle exec rails server', :in => @tab1)
+  command = "bundle exec rails server"
+  puts command
+  guest_ssh_command(command)
 end
 
 def host_open_project
@@ -297,6 +299,30 @@ def display_info_message
   puts '         > login : development'
   puts '         > pass  : development'
   puts "=================\n"
+end
+
+def host_new_tab(terminal)
+  if @got_first_tab_already
+    app("System Events").application_processes["Terminal.app"].keystroke("t", :using => :command_down)
+  end
+  @got_first_tab_already = true
+  terminal.windows[1].tabs.last.get
+end
+
+def guest_ssh_command(command)
+  # export PATH is important for rbenv and bundle
+  command = "ssh #{@hostname} -l vagrant 'export PATH=/home/vagrant/.rbenv/bin:/home/vagrant/.rbenv/shims:$PATH;cd /vagrant;#{command}'"
+  
+  PTY.spawn command do |stdin,stdout,pid|
+    begin
+      stdin.expect("password: ") do
+        stdout.write("vagrant\n")
+        puts stdin.read.lstrip
+      end
+    rescue Errno::EIO
+      # don't care
+    end
+  end
 end
 
 setup()
