@@ -3,8 +3,8 @@
 def setup
   host_check_ruby_version()
   host_install_gems()
-  host_ask_questions()
   host_update_git_submodules()
+  host_ask_questions()
   host_remove_logs()
   host_launch_guest_machine()
   host_create_dns()
@@ -85,26 +85,6 @@ def host_install_gems
   include Appscript
 end
 
-def host_ask_questions
-  current_folder = File.basename(Dir.getwd)
-  default_hostname = "#{current_folder}.local".downcase
-  
-  @host = `cat Vagrantfile | grep config.vm.network`.split("'")[1]
-  print "Host : #{@host}"  
-
-  print "Hostname (default is '#{default_hostname}'): "  
-  STDOUT.flush  
-  @hostname = gets.chomp.downcase
-  
-  @password = ask("Host password: ") { |q| q.echo = false }
-  
-  @host = default_host if @host.empty?()
-  @hostname = default_hostname if @hostname.empty?()
-
-  puts "Host is #{@host}"
-  puts "Hostname is #{@hostname}"
-end
-
 def host_update_git_submodules
   puts "\n================="
   puts 'Install and update git submodules (puppet rules)'
@@ -135,6 +115,26 @@ def host_update_git_submodules
     puts command
     system(command)
   end
+end
+
+def host_ask_questions
+  current_folder = File.basename(Dir.getwd)
+  default_hostname = "#{current_folder}.local".downcase
+  
+  @host = `cat Vagrantfile | grep config.vm.network`.split("'")[1]
+  print "Host : #{@host}"  
+
+  print "Hostname (default is '#{default_hostname}'): "  
+  STDOUT.flush  
+  @hostname = gets.chomp.downcase
+  
+  @password = ask("Host password: ") { |q| q.echo = false }
+  
+  @host = default_host if @host.empty?()
+  @hostname = default_hostname if @hostname.empty?()
+
+  puts "Host is #{@host}"
+  puts "Hostname is #{@hostname}"
 end
 
 def host_remove_logs
