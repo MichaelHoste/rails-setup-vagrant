@@ -122,7 +122,7 @@ def host_ask_questions
   default_hostname = "#{current_folder}.local".downcase
   
   @host = `cat Vagrantfile | grep config.vm.network`.split("'")[1]
-  print "Host : #{@host}"  
+  puts "Host : #{@host}"
 
   print "Hostname (default is '#{default_hostname}'): "  
   STDOUT.flush  
