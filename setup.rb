@@ -128,7 +128,7 @@ def host_ask_questions
   STDOUT.flush  
   @hostname = gets.chomp.downcase
   
-  @password = ask("Host password: ") { |q| q.echo = false }
+#  @password = ask("Host password: ") { |q| q.echo = false }
   
   @host = default_host if @host.empty?()
   @hostname = default_hostname if @hostname.empty?()
