@@ -9,13 +9,14 @@ def setup
   host_launch_guest_machine()
   host_create_dns()
 
-  guest_bundle_install()
-  guest_app_reset()
-  guest_git_setup()
-    
   @terminal = app('Terminal')
   @tab1 = host_new_tab(@terminal)
   @tab2 = host_new_tab(@terminal)
+
+  guest_initialize_ssh()
+  guest_git_setup()
+  guest_bundle_install()
+  guest_app_reset()
   
   guest_launch_server()
   host_open_project()
@@ -210,14 +211,42 @@ def host_create_dns
   end
 end
 
-#def guest_ssh
-#  puts "\n================="
-#  puts 'Guest SSH'
-#  puts "=================\n"
-#  
-#  @terminal.do_script('vagrant ssh',    :in => @tab1)
-#  @terminal.do_script('cd /vagrant',    :in => @tab1)
-#end
+def guest_initialize_ssh
+  puts "\n================="
+  puts 'Initialize SSH'
+  puts "=================\n"
+  
+  # vagrant ssh initialize some stuffs that we later need to use with direct ssh
+  sleep(5)
+  @terminal.do_script("cd #{@current_rep}", :in => @tab2)
+  sleep(5)
+  @terminal.do_script('vagrant ssh',        :in => @tab2)
+  sleep(20)
+  @terminal.do_script('exit',               :in => @tab2)
+  sleep(10)
+end
+
+def guest_git_setup
+  if @guest_status == "not created"
+    puts "\n================="
+    puts 'Guest setup git configuration'
+    puts 'With copy of host name/email/SSH keys'
+    puts "=================\n"
+  
+    commands = [
+      'git config --global user.name "' + @git_name + '"',
+      "git config --global user.email #{@git_email}",
+      "echo \"#{@id_rsa}\" >> ~/.ssh/id_rsa",
+      "echo \"#{@id_rsa_pub}\" >> ~/.ssh/id_rsa.pub",
+      "chmod 600 ~/.ssh/id_rsa",
+      "chmod 600 ~/.ssh/id_rsa.pub",
+    ].each do |command|
+      #@terminal.do_script(command, :in => @tab1)
+      puts command
+      guest_ssh_command(command)
+    end
+  end
+end
 
 def guest_bundle_install
   puts "\n================="
@@ -242,28 +271,6 @@ def guest_app_reset
     command = 'bundle exec rake app:reset'
     puts command
     guest_ssh_command(command)
-  end
-end
-
-def guest_git_setup
-  if @guest_status == "not created"
-    puts "\n================="
-    puts 'Guest setup git configuration'
-    puts 'With copy of host name/email/SSH keys'
-    puts "=================\n"
-  
-    commands = [
-      'git config --global user.name "' + @git_name + '"',
-      "git config --global user.email #{@git_email}",
-      "echo '#{@id_rsa}' >> ~/.ssh/id_rsa",
-      "echo '#{@id_rsa_pub}' >> ~/.ssh/id_rsa.pub",
-      "chmod 600 ~/.ssh/id_rsa",
-      "chmod 600 ~/.ssh/id_rsa.pub",
-    ].each do |command|
-      #@terminal.do_script(command, :in => @tab1)
-      puts command
-      guest_ssh_command(command)
-    end
   end
 end
 
@@ -311,6 +318,7 @@ end
 def guest_ssh_command(command)
   # export PATH is important for rbenv and bundle
   command = "ssh #{@hostname} -l vagrant 'export PATH=/home/vagrant/.rbenv/bin:/home/vagrant/.rbenv/shims:$PATH;cd /vagrant;#{command}'"
+  puts command
   
   PTY.spawn command do |stdin,stdout,pid|
     begin
