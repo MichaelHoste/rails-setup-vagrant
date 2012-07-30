@@ -221,7 +221,7 @@ def guest_initialize_ssh
   @terminal.do_script("cd #{@current_rep}", :in => @tab2)
   sleep(5)
   @terminal.do_script('vagrant ssh',        :in => @tab2)
-  sleep(20)
+  sleep(30)
   @terminal.do_script('exit',               :in => @tab2)
   sleep(10)
 end
